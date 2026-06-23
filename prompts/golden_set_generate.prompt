@@ -1,0 +1,19 @@
+基于以下文档内容，生成{num_questions}个高质量的问答对。问题应该多样化，覆盖不同类型。
+
+文档内容：
+{context}
+
+文档标题：{title}
+商品名称：{item_name}
+
+生成要求：
+1. 第一个问题为事实型（factual）：直接询问文档中的具体参数、规格、步骤等
+2. 第二个问题为推理型（reasoning）：需要对比、分析或解释原因
+3. 问题答案必须能从文档内容中找到依据
+4. 答案应准确、完整、可验证
+
+请返回JSON数组格式：
+[
+  {{"question": "问题1", "ground_truth": "标准答案1", "query_type": "factual", "difficulty": "easy"}},
+  {{"question": "问题2", "ground_truth": "标准答案2", "query_type": "reasoning", "difficulty": "medium"}}
+]

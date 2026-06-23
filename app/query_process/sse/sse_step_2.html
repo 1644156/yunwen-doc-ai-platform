@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务流状态调试</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            color: #20242c;
+            background: linear-gradient(180deg, #eef2f5 0%, #f8fafc 58%, #edf7f4 100%);
+        }
+        .panel {
+            width: 100%;
+            max-width: 760px;
+            border: 1px solid #d9e1ea;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 18px 40px rgba(15,23,42,.08);
+            padding: 24px;
+        }
+        h3 {
+            margin: 0 0 6px;
+            font-size: 20px;
+        }
+        .desc {
+            margin: 0 0 18px;
+            color: #667085;
+            font-size: 13px;
+        }
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        input, button {
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid #d9e1ea;
+            padding: 0 10px;
+            font-size: 13px;
+        }
+        input {
+            flex: 1;
+            min-width: 0;
+        }
+        button {
+            cursor: pointer;
+            color: #fff;
+            background: #20242c;
+            border-color: #20242c;
+        }
+        #result {
+            min-height: 200px;
+            padding: 14px;
+            border: 1px solid #d9e1ea;
+            border-radius: 8px;
+            background: #f8fafc;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h3>任务流状态调试</h3>
+        <p class="desc">提交会话任务后，通过实时通道查看处理结果。</p>
+        <div class="toolbar">
+            <input type="text" id="sessionIdInput" placeholder="会话 ID" value="test001">
+            <button onclick="submitTask()">提交任务</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        const resultDom = document.getElementById("result");
+
+        // 提交任务并触发后端异步处理
+        async function submitTask() {
+            const sessionId = document.getElementById("sessionIdInput").value;
+            resultDom.innerHTML = "";
+
+            // 调用提交接口
+            await fetch(`http://127.0.0.1:8001/submit/${sessionId}`);
+
+            // 建立实时通道并等待结果
+            eventSource = new EventSource(`http://127.0.0.1:8001/stream/${sessionId}`);
+            eventSource.onmessage = function(event) {
+                resultDom.innerHTML += event.data + "<br>";
+            };
+        }
+    </script>
+</body>
+</html>

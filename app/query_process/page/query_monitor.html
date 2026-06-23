@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>查询运行监控</title>
+  <style>
+    :root{
+      --bg:#eef2f5; --card:#fff; --text:#20242c; --muted:#667085;
+      --ok:#0f766e; --bad:#dc2626; --run:#2563eb; --border:#d9e1ea;
+      --shadow:0 12px 32px rgba(15,23,42,.07);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#eef2f5 0%,#f8fafc 58%,#edf7f4 100%);color:var(--text)}
+    .wrap{max-width:1240px;margin:28px auto;padding:0 18px}
+    .top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;gap:16px}
+    .title{font-size:22px;font-weight:700;letter-spacing:0}
+    .subtitle{font-size:12px;color:var(--muted);margin-top:6px}
+    .ctrl{display:flex;gap:8px;align-items:center}
+    input,button{height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;background:#fff;color:var(--text)}
+    input{min-width:240px;outline:none}
+    input:focus{border-color:rgba(15,118,110,.55);box-shadow:0 0 0 3px rgba(15,118,110,.10)}
+    button{cursor:pointer}
+    #btnRefresh{background:#20242c;color:#fff;border-color:#20242c}
+    .cards{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px;margin-bottom:12px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;box-shadow:var(--shadow)}
+    .k{font-size:12px;color:var(--muted)}
+    .v{font-size:22px;font-weight:700;margin-top:5px}
+    .tbl{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:11px 10px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:top}
+    th{background:#f8fafc;text-align:left;color:#475467;font-weight:600}
+    .tag{display:inline-block;padding:3px 8px;border-radius:8px;font-size:12px;color:#fff;white-space:nowrap}
+    .ok{background:var(--ok)} .bad{background:var(--bad)} .run{background:var(--run)}
+    .muted{color:var(--muted)}
+    .q{max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sid{max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .row:hover{background:#f8fbfd}
+    .detail{margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow)}
+    .line{margin:6px 0;font-size:13px}
+    .mono{font-family:Consolas,monospace}
+    @media (max-width: 900px){
+      .top{align-items:stretch;flex-direction:column}
+      .ctrl{width:100%}
+      input{min-width:0;flex:1}
+      .cards{grid-template-columns:repeat(2,minmax(120px,1fr))}
+      .tbl{overflow:auto}
+      table{min-width:920px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="title">查询运行监控</div>
+        <div class="subtitle">近 200 次请求 · 会话追踪 · 延迟观测</div>
+      </div>
+      <div class="ctrl">
+        <input id="kw" placeholder="搜索问题或会话 ID" />
+        <button id="btnRefresh">刷新</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card"><div class="k">请求总量</div><div class="v" id="mTotal">0</div></div>
+      <div class="card"><div class="k">成功</div><div class="v" id="mOk">0</div></div>
+      <div class="card"><div class="k">失败</div><div class="v" id="mFail">0</div></div>
+      <div class="card"><div class="k">处理中</div><div class="v" id="mRun">0</div></div>
+      <div class="card"><div class="k">成功率</div><div class="v" id="mSr">0%</div></div>
+      <div class="card"><div class="k">P95 延迟(ms)</div><div class="v" id="mP95">0</div></div>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead>
+          <tr>
+            <th>状态</th><th>Session</th><th>问题</th><th>延迟(ms)</th>
+            <th>完成/运行</th><th>答案字数</th><th>更新时间</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="detail" id="detail" style="display:none;"></div>
+  </div>
+
+  <script>
+    const API_BASE = `${location.protocol}//${location.host}`;
+    const tbody = document.getElementById('tbody');
+    const kw = document.getElementById('kw');
+    const detail = document.getElementById('detail');
+    const fmt = ts => ts ? new Date(ts * 1000).toLocaleString('zh-CN') : '-';
+    const esc = s => String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+
+    function statusLabel(status){
+      if(status === 'completed') return '已完成';
+      if(status === 'failed') return '失败';
+      return '处理中';
+    }
+
+    function tag(status){
+      if(status === 'completed') return '<span class="tag ok">已完成</span>';
+      if(status === 'failed') return '<span class="tag bad">失败</span>';
+      return '<span class="tag run">处理中</span>';
+    }
+
+    function setSummary(s){
+      document.getElementById('mTotal').textContent = s.total ?? 0;
+      document.getElementById('mOk').textContent = s.completed ?? 0;
+      document.getElementById('mFail').textContent = s.failed ?? 0;
+      document.getElementById('mRun').textContent = s.processing ?? 0;
+      document.getElementById('mSr').textContent = `${s.success_rate ?? 0}%`;
+      document.getElementById('mP95').textContent = s.p95_latency_ms ?? 0;
+    }
+
+    async function load(){
+      const res = await fetch(`${API_BASE}/query/monitor/recent?limit=200`);
+      const data = await res.json();
+      setSummary(data.summary || {});
+      const k = (kw.value || '').trim().toLowerCase();
+      const items = (data.items || []).filter(x => {
+        const text = `${x.session_id||''} ${x.query||''}`.toLowerCase();
+        return !k || text.includes(k);
+      });
+
+      tbody.innerHTML = items.map(x => `
+        <tr class="row">
+          <td>${tag(x.status)}</td>
+          <td class="sid mono" title="${esc(x.session_id)}">${esc(x.session_id)}</td>
+          <td class="q" title="${esc(x.query)}">${esc(x.query)}</td>
+          <td>${x.latency_ms ?? '-'}</td>
+          <td>${x.done_count ?? 0} / ${x.running_count ?? 0}</td>
+          <td>${x.answer_len ?? 0}</td>
+          <td class="muted">${fmt(x.updated_at)}</td>
+          <td><button onclick="showDetail('${esc(x.session_id)}')">详情</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function showDetail(sessionId){
+      const res = await fetch(`${API_BASE}/query/monitor/${sessionId}`);
+      const d = await res.json();
+      detail.style.display = 'block';
+      detail.innerHTML = `
+        <div class="line"><b>Session:</b> <span class="mono">${esc(d.session_id)}</span></div>
+        <div class="line"><b>状态:</b> ${esc(statusLabel(d.status))}</div>
+        <div class="line"><b>问题:</b> ${esc(d.query || '')}</div>
+        <div class="line"><b>延迟:</b> ${d.latency_ms ?? '-'} ms</div>
+        <div class="line"><b>已完成:</b> ${esc((d.done_list || []).join(' | '))}</div>
+        <div class="line"><b>进行中:</b> ${esc((d.running_list || []).join(' | '))}</div>
+        <div class="line"><b>错误:</b> ${esc(d.error || '')}</div>
+      `;
+    }
+
+    document.getElementById('btnRefresh').addEventListener('click', load);
+    kw.addEventListener('input', load);
+    load();
+    setInterval(load, 3000);
+    window.showDetail = showDetail;
+  </script>
+</body>
+</html>

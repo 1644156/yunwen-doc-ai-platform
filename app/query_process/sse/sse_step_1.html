@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时通道连通性检查</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            color: #20242c;
+            background: linear-gradient(180deg, #eef2f5 0%, #f8fafc 58%, #edf7f4 100%);
+        }
+        .panel {
+            width: 100%;
+            max-width: 720px;
+            border: 1px solid #d9e1ea;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 18px 40px rgba(15,23,42,.08);
+            padding: 24px;
+        }
+        h3 {
+            margin: 0 0 6px;
+            font-size: 20px;
+        }
+        .desc {
+            margin: 0 0 18px;
+            color: #667085;
+            font-size: 13px;
+        }
+        #result {
+            min-height: 180px;
+            padding: 14px;
+            border: 1px solid #d9e1ea;
+            border-radius: 8px;
+            background: #f8fafc;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h3>实时通道连通性检查</h3>
+        <p class="desc">用于验证服务端事件推送是否正常返回。</p>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // 创建 EventSource 连接服务端推送接口
+        const eventSource = new EventSource("http://127.0.0.1:8001/simple_stream");
+        const resultDom = document.getElementById("result");
+
+        // 监听服务端消息
+        eventSource.onmessage = function(event) {
+            resultDom.innerHTML += event.data + "<br>";
+        };
+    </script>
+</body>
+</html>
