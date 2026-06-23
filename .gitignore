@@ -1,0 +1,60 @@
+# Environment files
+.env
+*.env
+!*.env.example
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Runtime data
+logs/
+output/
+*.log
+
+# Evaluation details
+reports/**/*.jsonl
+!data/golden_set.jsonl
+
+# Local/generated datasets and large source documents
+doc/*.pdf
+doc/*.zip
+doc/*.docx
+doc/*.xlsx
+doc/*.pptx
+doc/*/
+
+# Local model/cache files
+models/
+.cache/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx
+
+# Docker/local volumes and database dumps
+docker/**/data/
+docker/**/volumes/
+*.dump
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db
