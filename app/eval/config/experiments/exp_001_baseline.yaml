@@ -1,0 +1,9 @@
+experiment:
+  name: "baseline"
+  description: "原始多路召回 + RRF + Rerank（无路由、无CRAG）"
+  golden_set_path: "data/golden_set.jsonl"
+  runs:
+    - name: "baseline"
+      config:
+        enable_routing: false
+        enable_crag: false

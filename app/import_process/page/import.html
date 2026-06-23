@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档入库工作台</title>
+    <style>
+        :root {
+            --bg: #eef2f5;
+            --panel: #ffffff;
+            --text: #20242c;
+            --muted: #667085;
+            --brand: #0f766e;
+            --brand2: #2563eb;
+            --border: #d9e1ea;
+            --shadow: 0 18px 40px rgba(15,23,42,.08);
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #eef2f5 0%, #f8fafc 58%, #edf7f4 100%);
+            margin: 0;
+            padding: 28px 18px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 920px;
+            background-color: var(--panel);
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--brand), var(--brand2));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0;
+        }
+        h1 {
+            color: var(--text);
+            margin: 0;
+            font-size: 22px;
+            line-height: 1.2;
+        }
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        .upload-area {
+            border: 1px dashed rgba(15,118,110,.55);
+            border-radius: 8px;
+            padding: 42px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+            background: #f8fafc;
+        }
+        .upload-area:hover {
+            background-color: #f0fdfa;
+            border-color: var(--brand);
+            box-shadow: inset 0 0 0 1px rgba(15,118,110,.08);
+        }
+        .upload-icon {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(15,118,110,.20);
+            background: #fff;
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+        .upload-area p {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .upload-area span {
+            display: block;
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .file-input {
+            display: none;
+        }
+        .btn {
+            background-color: var(--brand);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #0d665f;
+        }
+        .btn:disabled {
+            background-color: #b8c1cc;
+            cursor: not-allowed;
+        }
+        .file-list {
+            margin-top: 30px;
+        }
+        .file-item {
+            background-color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            margin-right: 20px;
+        }
+        .file-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .file-size {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        .status-badge {
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            min-width: 80px;
+            text-align: center;
+        }
+        .status-uploading { background-color: #d97706; }
+        .status-processing { background-color: #2563eb; }
+        .status-completed { background-color: #0f766e; }
+        .status-error { background-color: #dc2626; }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background-color: #edf1f5;
+            margin-top: 8px;
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #d97706;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .log-details {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .log-details summary {
+            cursor: pointer;
+            user-select: none;
+            color: var(--muted);
+        }
+        .log-list {
+            margin: 6px 0 0 16px;
+            padding: 0;
+        }
+        .log-list li {
+            margin: 2px 0;
+            line-height: 1.4;
+        }
+        @media (max-width: 700px) {
+            body {
+                padding: 12px;
+            }
+            .container {
+                padding: 18px;
+            }
+            .file-item {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .file-info {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="brand-mark">YW</div>
+        <div>
+            <h1>文档入库工作台</h1>
+            <div class="subtitle">PDF / Markdown 文档解析、切分、向量化入库</div>
+        </div>
+    </div>
+    
+    <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">DOC</div>
+        <p>点击或拖拽 PDF / Markdown 文档到此处</p>
+        <span>支持批量上传，入库进度会实时展示</span>
+        <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.md">
+    </div>
+
+    <div id="fileList" class="file-list">
+        <!-- 文件列表将在这里生成 -->
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    
+    // 导入服务 API 地址
+    const API_BASE = 'http://127.0.0.1:8000';
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '#f0fdfa';
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '';
+        handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+        Array.from(files).forEach(uploadFile);
+    }
+
+    function updateProgressBar(bar, percentage) {
+        bar.style.width = percentage + '%';
+        if (percentage >= 100) {
+            bar.style.backgroundColor = '#0f766e';
+        } else {
+            bar.style.backgroundColor = '#d97706';
+        }
+    }
+
+    async function uploadFile(file) {
+        // 创建文件项UI
+        const id = 'file-' + Math.random().toString(36).substr(2, 9);
+        const html = `
+            <div class="file-item" id="${id}">
+                <div class="file-info">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${(file.size / 1024).toFixed(2)} KB</span>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar"></div>
+                    </div>
+                    <details class="log-details">
+                        <summary>处理明细（点击展开）</summary>
+                        <ul class="log-list"></ul>
+                    </details>
+                </div>
+                <div class="status-badge status-uploading">上传中...</div>
+            </div>
+        `;
+        fileList.insertAdjacentHTML('afterbegin', html);
+        const itemEl = document.getElementById(id);
+        const statusBadge = itemEl.querySelector('.status-badge');
+        const progressBar = itemEl.querySelector('.progress-bar');
+        const progressContainer = itemEl.querySelector('.progress-bar-container');
+        const logDetails = itemEl.querySelector('.log-details');
+        const logSummary = itemEl.querySelector('.log-details summary');
+        const logListEl = itemEl.querySelector('.log-list');
+
+        // 构建FormData
+        const formData = new FormData();
+        formData.append('files', file);
+
+        try {
+            // 1. 上传文件
+            progressContainer.style.display = 'block';
+            // 上传阶段进度展示
+            updateProgressBar(progressBar, 50);
+
+            const response = await fetch(`${API_BASE}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Upload failed');
+            
+            const result = await response.json();
+            const taskId = result.task_ids[0]; // 假设一次传一个或取第一个
+
+            // 上传完成，进入处理中，进度固定为30%
+            updateProgressBar(progressBar, 30);
+            statusBadge.textContent = '处理中...';
+            statusBadge.className = 'status-badge status-processing';
+
+            // 2. 轮询状态
+            pollStatus(taskId, itemEl);
+
+        } catch (error) {
+            console.error(error);
+            statusBadge.textContent = '失败';
+            statusBadge.className = 'status-badge status-error';
+        }
+    }
+
+    function normalizeDoneLog(text) {
+        // 后端可能返回中文节点名，也可能已拼接“已完成”
+        if (typeof text !== 'string') return String(text);
+        return text.endsWith('已完成') ? text : `${text}已完成`;
+    }
+
+    function normalizeRunningLog(text) {
+        // 后端可能返回中文节点名，也可能已拼接“正在进行.../处理中...”
+        if (typeof text !== 'string') return String(text);
+        if (text.startsWith('正在进行')) return text.endsWith('...') ? text : `${text}...`;
+        return `正在进行${text}...`;
+    }
+
+    function renderLogs(itemEl, doneList, runningList) {
+        const logSummary = itemEl.querySelector('.log-details summary');
+        const logListEl = itemEl.querySelector('.log-list');
+        const logDetails = itemEl.querySelector('.log-details');
+
+        const done = Array.isArray(doneList) ? doneList : [];
+        const running = Array.isArray(runningList) ? runningList : [];
+
+        // 更新 summary（即使收起也能看到进度）
+        logSummary.textContent = `处理明细（已完成${done.length}，进行中${running.length}，点击展开）`;
+
+        // 清空并重建列表
+        logListEl.innerHTML = '';
+        const lines = [
+            ...done.map(normalizeDoneLog),
+            ...running.map(normalizeRunningLog),
+        ];
+
+        if (lines.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = '暂无处理明细';
+            logListEl.appendChild(li);
+        } else {
+            for (const line of lines) {
+                const li = document.createElement('li');
+                li.textContent = line;
+                logListEl.appendChild(li);
+            }
+        }
+
+        // 如果没有任何日志，默认收起；否则保持用户选择
+        if (lines.length === 0) {
+            logDetails.open = false;
+        }
+    }
+
+    function pollStatus(taskId, itemEl) {
+        const statusBadge = itemEl.querySelector('.status-badge');
+        const progressBar = itemEl.querySelector('.progress-bar');
+        
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch(`${API_BASE}/status/${taskId}`);
+                const data = await res.json();
+
+                // 渲染处理明细（done/running）
+                renderLogs(itemEl, data.done_list, data.running_list);
+                
+                if (data.status === 'completed') {
+                    statusBadge.textContent = '已完成';
+                    statusBadge.className = 'status-badge status-completed';
+                    updateProgressBar(progressBar, 100);
+                    clearInterval(interval);
+                } else if (data.status === 'processing') {
+                    // 保持处理中状态
+                    statusBadge.textContent = '处理中...';
+                    // 确保进度为30%
+                     updateProgressBar(progressBar, 30);
+                } else if (data.status === 'failed') {
+                    statusBadge.textContent = '失败';
+                    statusBadge.className = 'status-badge status-error';
+                    clearInterval(interval);
+                }
+            } catch (e) {
+                console.error('Polling error', e);
+            }
+        }, 2000); // 每2秒轮询一次
+    }
+</script>
+
+</body>
+</html>

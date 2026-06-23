@@ -1,0 +1,13 @@
+experiment:
+  name: "with_crag"
+  description: "+ CRAG 纠错检索"
+  golden_set_path: "data/golden_set.jsonl"
+  runs:
+    - name: "baseline"
+      config:
+        enable_routing: false
+        enable_crag: false
+    - name: "with_crag"
+      config:
+        enable_routing: false
+        enable_crag: true

@@ -1,0 +1,13 @@
+experiment:
+  name: "with_routing"
+  description: "+ 自适应查询路由"
+  golden_set_path: "data/golden_set.jsonl"
+  runs:
+    - name: "baseline"
+      config:
+        enable_routing: false
+        enable_crag: false
+    - name: "with_routing"
+      config:
+        enable_routing: true
+        enable_crag: false

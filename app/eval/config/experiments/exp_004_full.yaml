@@ -1,0 +1,21 @@
+experiment:
+  name: "routing_plus_crag"
+  description: "Routing + CRAG 全开"
+  golden_set_path: "data/golden_set.jsonl"
+  runs:
+    - name: "baseline"
+      config:
+        enable_routing: false
+        enable_crag: false
+    - name: "with_routing"
+      config:
+        enable_routing: true
+        enable_crag: false
+    - name: "with_crag"
+      config:
+        enable_routing: false
+        enable_crag: true
+    - name: "full"
+      config:
+        enable_routing: true
+        enable_crag: true
